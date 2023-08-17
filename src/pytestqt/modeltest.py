@@ -78,7 +78,7 @@ class ModelTester:
         self._change_in_flight = None
 
     def _debug(self, text):
-        print("modeltest: " + text)
+        print(f"modeltest: {text}")
 
     def _modelindex_debug(self, index):
         """Get a string for debug output for a QModelIndex."""
@@ -234,8 +234,7 @@ class ModelTester:
         assert flags == qt_api.QtCore.Qt.ItemFlag.ItemIsDropEnabled or not flags
         self._has_children(qt_api.QtCore.QModelIndex())
 
-        has_row = self._model.hasIndex(0, 0)
-        if has_row:
+        if has_row := self._model.hasIndex(0, 0):
             cache = None
             self._model.match(self._model.index(0, 0), -1, cache)
 
@@ -404,10 +403,7 @@ class ModelTester:
         if rows > 0 and columns > 0:
             assert self._has_children(parent)
         self._debug(
-            "Checking children of {} with depth {} "
-            "({} rows, {} columns)".format(
-                self._modelindex_debug(parent), current_depth, rows, columns
-            )
+            f"Checking children of {self._modelindex_debug(parent)} with depth {current_depth} ({rows} rows, {columns} columns)"
         )
 
         top_left_child = self._model.index(0, 0, parent)
@@ -424,9 +420,7 @@ class ModelTester:
                 # rowCount() and columnCount() said that it existed...
                 if not index.isValid():
                     self._debug(
-                        "Got invalid index at row={} col={} parent={}".format(
-                            r, c, self._modelindex_debug(parent)
-                        )
+                        f"Got invalid index at row={r} col={c} parent={self._modelindex_debug(parent)}"
                     )
                 assert index.isValid()
 
@@ -450,20 +444,7 @@ class ModelTester:
                 # play with.
                 if self._parent(index) != parent:
                     self._debug(
-                        "Inconsistent parent() implementation detected\n"
-                        "  index={} exp. parent={} act. parent={}\n"
-                        "  row={} col={} depth={}\n"
-                        "  data for child: {}\n"
-                        "  data for parent: {}\n".format(
-                            self._modelindex_debug(index),
-                            self._modelindex_debug(parent),
-                            self._modelindex_debug(self._parent(index)),
-                            r,
-                            c,
-                            current_depth,
-                            self._model.data(index),
-                            self._model.data(parent),
-                        )
+                        f"Inconsistent parent() implementation detected\n  index={self._modelindex_debug(index)} exp. parent={self._modelindex_debug(parent)} act. parent={self._modelindex_debug(self._parent(index))}\n  row={r} col={c} depth={current_depth}\n  data for child: {self._model.data(index)}\n  data for parent: {self._model.data(parent)}\n"
                     )
 
                 # Check that we can get back our real parent.
@@ -472,9 +453,7 @@ class ModelTester:
                 # recursively go down the children
                 if self._has_children(index) and current_depth < 10:
                     self._debug(
-                        "{} has {} children".format(
-                            self._modelindex_debug(index), self._model.rowCount(index)
-                        )
+                        f"{self._modelindex_debug(index)} has {self._model.rowCount(index)} children"
                     )
                     self._check_children(index, current_depth + 1)
 
@@ -482,7 +461,7 @@ class ModelTester:
                 # doesn't change.
                 newer_index = self._model.index(r, c, parent)
                 assert index == newer_index
-        self._debug("Children check for {} done".format(self._modelindex_debug(parent)))
+        self._debug(f"Children check for {self._modelindex_debug(parent)} done")
 
     def _test_data(self):
         """Test model's implementation of data()"""
@@ -555,28 +534,14 @@ class ModelTester:
         self._change_in_flight = _ChangeInFlight.COLUMNS_INSERTED
         last_index = self._model.index(start - 1, 0, parent)
         self._debug(
-            "columns about to be inserted: start {}, end {}, parent {}, "
-            "current count of parent {}, last before insertion {} {}".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                self._model.rowCount(parent),
-                self._modelindex_debug(last_index),
-                self._model.data(last_index),
-            )
+            f"columns about to be inserted: start {start}, end {end}, parent {self._modelindex_debug(parent)}, current count of parent {self._model.rowCount(parent)}, last before insertion {self._modelindex_debug(last_index)} {self._model.data(last_index)}"
         )
 
     def _on_columns_inserted(self, parent, start, end):
         assert self._change_in_flight == _ChangeInFlight.COLUMNS_INSERTED
         self._change_in_flight = None
         self._debug(
-            "columns inserted: start {}, end {}, parent {}, "
-            "current count of parent {}, ".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                self._model.rowCount(parent),
-            )
+            f"columns inserted: start {start}, end {end}, parent {self._modelindex_debug(parent)}, current count of parent {self._model.rowCount(parent)}, "
         )
 
     def _on_columns_about_to_be_moved(
@@ -585,15 +550,7 @@ class ModelTester:
         assert self._change_in_flight is None
         self._change_in_flight = _ChangeInFlight.COLUMNS_MOVED
         self._debug(
-            "columns about to be moved: source start {}, source end {}, "
-            "source parent {}, destination parent {}, "
-            "destination column {}".format(
-                source_start,
-                source_end,
-                self._modelindex_debug(source_parent),
-                self._modelindex_debug(dest_parent),
-                dest_column,
-            )
+            f"columns about to be moved: source start {source_start}, source end {source_end}, source parent {self._modelindex_debug(source_parent)}, destination parent {self._modelindex_debug(dest_parent)}, destination column {dest_column}"
         )
 
     def _on_columns_moved(
@@ -602,15 +559,7 @@ class ModelTester:
         assert self._change_in_flight == _ChangeInFlight.COLUMNS_MOVED
         self._change_in_flight = None
         self._debug(
-            "columns moved: source start {}, source end {}, "
-            "source parent {}, destination parent {}, "
-            "destination column {}".format(
-                source_start,
-                source_end,
-                self._modelindex_debug(source_parent),
-                self._modelindex_debug(dest_parent),
-                dest_column,
-            )
+            f"columns moved: source start {source_start}, source end {source_end}, source parent {self._modelindex_debug(source_parent)}, destination parent {self._modelindex_debug(dest_parent)}, destination column {dest_column}"
         )
 
     def _on_columns_about_to_be_removed(self, parent, start, end):
@@ -618,26 +567,14 @@ class ModelTester:
         self._change_in_flight = _ChangeInFlight.COLUMNS_REMOVED
         last_index = self._model.index(start - 1, 0, parent)
         self._debug(
-            "columns about to be removed: start {}, end {}, "
-            "parent {}, parent rowcount {}, last before removal {}".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                self._model.rowCount(parent),
-                self._modelindex_debug(last_index),
-            )
+            f"columns about to be removed: start {start}, end {end}, parent {self._modelindex_debug(parent)}, parent rowcount {self._model.rowCount(parent)}, last before removal {self._modelindex_debug(last_index)}"
         )
 
     def _on_columns_removed(self, parent, start, end):
         assert self._change_in_flight == _ChangeInFlight.COLUMNS_REMOVED
         self._change_in_flight = None
         self._debug(
-            "columns removed: start {}, end {}, parent {}, parent rowcount {}".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                self._model.rowCount(parent),
-            )
+            f"columns removed: start {start}, end {end}, parent {self._modelindex_debug(parent)}, parent rowcount {self._model.rowCount(parent)}"
         )
 
     def _on_rows_about_to_be_inserted(self, parent, start, end):
@@ -653,15 +590,7 @@ class ModelTester:
         parent_rowcount = self._model.rowCount(parent)
 
         self._debug(
-            "rows about to be inserted: start {}, end {}, parent {}, "
-            "parent row count {}, last item {}, next item {}".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                parent_rowcount,
-                self._modelindex_debug(last_index),
-                self._modelindex_debug(next_index),
-            )
+            f"rows about to be inserted: start {start}, end {end}, parent {self._modelindex_debug(parent)}, parent row count {parent_rowcount}, last item {self._modelindex_debug(last_index)}, next item {self._modelindex_debug(next_index)}"
         )
 
         last_data = self._model.data(last_index) if start > 0 else None
@@ -679,7 +608,7 @@ class ModelTester:
         c = self._insert.pop()
         last_data = (
             self._model.data(self._model.index(start - 1, 0, parent))
-            if start - 1 >= 0
+            if start >= 1
             else None
         )
         next_data = (
@@ -717,7 +646,7 @@ class ModelTester:
 
         for ii in range(start, end + 1):
             idx = self._model.index(ii, 0, parent)
-            self._debug(" item {} inserted: {}".format(ii, self._modelindex_debug(idx)))
+            self._debug(f" item {ii} inserted: {self._modelindex_debug(idx)}")
         self._debug("")
 
         assert current_size == expected_size
@@ -732,15 +661,7 @@ class ModelTester:
         assert self._change_in_flight is None
         self._change_in_flight = _ChangeInFlight.ROWS_MOVED
         self._debug(
-            "rows about to be moved: source start {}, source end {}, "
-            "source parent {}, destination parent {}, "
-            "destination row {}".format(
-                source_start,
-                source_end,
-                self._modelindex_debug(source_parent),
-                self._modelindex_debug(dest_parent),
-                dest_row,
-            )
+            f"rows about to be moved: source start {source_start}, source end {source_end}, source parent {self._modelindex_debug(source_parent)}, destination parent {self._modelindex_debug(dest_parent)}, destination row {dest_row}"
         )
 
     def _on_rows_moved(
@@ -749,15 +670,7 @@ class ModelTester:
         assert self._change_in_flight == _ChangeInFlight.ROWS_MOVED
         self._change_in_flight = None
         self._debug(
-            "rows moved: source start {}, source end {}, "
-            "source parent {}, destination parent {}, "
-            "destination row {}".format(
-                source_start,
-                source_end,
-                self._modelindex_debug(source_parent),
-                self._modelindex_debug(dest_parent),
-                dest_row,
-            )
+            f"rows moved: source start {source_start}, source end {source_end}, source parent {self._modelindex_debug(source_parent)}, destination parent {self._modelindex_debug(dest_parent)}, destination row {dest_row}"
         )
 
     def _on_layout_about_to_be_changed(self):
@@ -805,15 +718,7 @@ class ModelTester:
         )
 
         self._debug(
-            "rows about to be removed: start {}, end {}, parent {}, "
-            "parent row count {}, last item {}, next item {}".format(
-                start,
-                end,
-                self._modelindex_debug(parent),
-                parent_rowcount,
-                self._modelindex_debug(last_index),
-                self._modelindex_debug(next_index),
-            )
+            f"rows about to be removed: start {start}, end {end}, parent {self._modelindex_debug(parent)}, parent row count {parent_rowcount}, last item {self._modelindex_debug(last_index)}, next item {self._modelindex_debug(next_index)}"
         )
 
         if last_index is not None:

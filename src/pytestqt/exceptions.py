@@ -62,7 +62,7 @@ class _QtExceptionCaptureManager:
             self.finish()
             exceptions = self.exceptions
             self.exceptions = []
-            prefix = "%s ERROR: " % when
+            prefix = f"{when} ERROR: "
             msg = prefix + format_captured_exceptions(exceptions)
             del exceptions[:]  # Don't keep exceptions alive longer.
             pytest.fail(msg, pytrace=False)

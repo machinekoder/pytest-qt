@@ -78,8 +78,7 @@ def build_signal_tests_variants(params):
     result = []
     for param in params:
         for wait_function in (explicit_wait, context_manager_wait):
-            for raising in (True, False):
-                result.append(param + (wait_function, raising))
+            result.extend(param + (wait_function, raising) for raising in (True, False))
     return result
 
 
@@ -437,7 +436,6 @@ def test_signal_identity(signaller):
     id(x) == id(y)  # is False
     str(x) == str(y)  # is True (for all Qt frameworks)
     """
-    assert str(signaller.signal) == str(signaller.signal)
     x = signaller.signal
     y = signaller.signal
     assert str(x) == str(y)
@@ -523,20 +521,7 @@ def get_waitsignals_cases(order, working):
     Non-working cases in less stricter cases also are non-working in stricter cases.
     """
     if order == "none":
-        if working:
-            cases = get_waitsignals_cases(order="simple", working=True)
-            cases.extend(
-                [
-                    # allow even out-of-order signals
-                    (("A1", "A2"), ("A2", "A1"), True),
-                    (("A1", "A2"), ("A2", "Ax"), True),
-                    (("A1", "B1"), ("B1", "A1"), True),
-                    (("A1", "B1"), ("B1", "Ax"), True),
-                    (("A1", "B1", "B1"), ("B1", "A1", "B1"), True),
-                ]
-            )
-            return cases
-        else:
+        if not working:
             return [
                 (("A2",), ("A1",), False),
                 (("A1",), ("B1",), False),
@@ -548,6 +533,18 @@ def get_waitsignals_cases(order, working):
                 (("A1", "B1"), ("B1", "B1"), False),
                 (("A1", "B1", "B1"), ("A1", "A1", "B1"), False),
             ]
+        cases = get_waitsignals_cases(order="simple", working=True)
+        cases.extend(
+            [
+                # allow even out-of-order signals
+                (("A1", "A2"), ("A2", "A1"), True),
+                (("A1", "A2"), ("A2", "Ax"), True),
+                (("A1", "B1"), ("B1", "A1"), True),
+                (("A1", "B1"), ("B1", "Ax"), True),
+                (("A1", "B1", "B1"), ("B1", "A1", "B1"), True),
+            ]
+        )
+        return cases
     elif order == "simple":
         if working:
             cases = get_waitsignals_cases(order="strict", working=True)
@@ -560,7 +557,6 @@ def get_waitsignals_cases(order, working):
                     (("A1", "A2", "A1"), ("A1", "A1"), True),
                 ]
             )
-            return cases
         else:
             cases = get_waitsignals_cases(order="none", working=False)
             cases.extend(
@@ -572,7 +568,7 @@ def get_waitsignals_cases(order, working):
                     (("A1", "B1", "B1"), ("B1", "B1", "A1"), False),
                 ]
             )
-            return cases
+        return cases
     elif order == "strict":
         if working:
             return [
@@ -594,15 +590,14 @@ def get_waitsignals_cases(order, working):
                 ),  # blocker doesn't know about signal B1 -> test passes
                 (("A1", "B1", "A1"), ("Ax", "A1"), True),
             ]
-        else:
-            cases = get_waitsignals_cases(order="simple", working=False)
-            cases.extend(
-                [
-                    # don't allow in-between signals
-                    (("A1", "A1", "A2", "B1"), ("A1", "A2", "B1"), False)
-                ]
-            )
-            return cases
+        cases = get_waitsignals_cases(order="simple", working=False)
+        cases.extend(
+            [
+                # don't allow in-between signals
+                (("A1", "A1", "A2", "B1"), ("A1", "A2", "B1"), False)
+            ]
+        )
+        return cases
 
 
 class TestCallback:
@@ -618,8 +613,7 @@ class TestCallback:
     def get_signal_from_code(signaller, code):
         """Converts a code such as 'A1' to a signal (signaller.signal_args for example)."""
         assert type(code) == str and len(code) == 2
-        signal = signaller.signal_args if code[0] == "A" else signaller.signal_args_2
-        return signal
+        return signaller.signal_args if code[0] == "A" else signaller.signal_args_2
 
     @staticmethod
     def emit_parametrized_signals(signaller, emitted_signal_codes):
@@ -883,15 +877,15 @@ def get_mixed_signals_with_guaranteed_name(signaller):
     Returns a list of signals with the guarantee that the signals have names (i.e. the names are
     manually provided in case of using PySide2, where the signal names cannot be determined at run-time).
     """
-    if qt_api.is_pyside:
-        signals = [
+    return (
+        [
             (signaller.signal, "signal()"),
             (signaller.signal_args, "signal_args(QString,int)"),
             (signaller.signal_args, "signal_args(QString,int)"),
         ]
-    else:
-        signals = [signaller.signal, signaller.signal_args, signaller.signal_args]
-    return signals
+        if qt_api.is_pyside
+        else [signaller.signal, signaller.signal_args, signaller.signal_args]
+    )
 
 
 class TestAllSignalsAndArgs:
@@ -1167,10 +1161,10 @@ class TestWaitSignalsTimeoutErrorMessage:
                 signaller.signal_args.emit("1", 1)
         ex_msg = TestWaitSignalsTimeoutErrorMessage.get_exception_message(excinfo)
         signal_args = "'1', 1"
-        assert ex_msg == (
-            "Emitted signals: [signal_args({})]. Missing: "
-            "[signal(), signal_args(QString,int), signal_args(QString,int)]"
-        ).format(signal_args)
+        assert (
+            ex_msg
+            == f"Emitted signals: [signal_args({signal_args})]. Missing: [signal(), signal_args(QString,int), signal_args(QString,int)]"
+        )
 
     def test_strict_order_violation(self, qtbot, signaller):
         """
@@ -1190,11 +1184,10 @@ class TestWaitSignalsTimeoutErrorMessage:
                 signaller.signal.emit()
         ex_msg = TestWaitSignalsTimeoutErrorMessage.get_exception_message(excinfo)
         signal_args = "'1', 1"
-        assert ex_msg == (
-            "Signal order violated! Expected signal() as 1st signal, "
-            "but received signal_args({}) instead. Emitted signals: [signal_args({}), signal]. "
-            "Missing: [signal(), signal_args(QString,int), signal_args(QString,int)]"
-        ).format(signal_args, signal_args)
+        assert (
+            ex_msg
+            == f"Signal order violated! Expected signal() as 1st signal, but received signal_args({signal_args}) instead. Emitted signals: [signal_args({signal_args}), signal]. Missing: [signal(), signal_args(QString,int), signal_args(QString,int)]"
+        )
 
     def test_degenerate_error_msg(self, qtbot, signaller):
         """

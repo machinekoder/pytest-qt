@@ -257,7 +257,7 @@ def test_exception_capture_on_fixture_setup_and_teardown(testdir, mode):
     res = testdir.runpytest("-s")
     res.stdout.fnmatch_lines(
         [
-            "*__ ERROR at %s of test_capture __*" % mode,
+            f"*__ ERROR at {mode} of test_capture __*",
             "*RuntimeError('event processed')*",
             "*1 error*",
         ]

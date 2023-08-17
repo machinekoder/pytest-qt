@@ -93,22 +93,19 @@ def test_broken_types(check_model, broken_role):
     values for various display roles.
     """
 
+
+
     class BrokenTypeModel(qt_api.QtCore.QAbstractListModel):
         def rowCount(self, parent=qt_api.QtCore.QModelIndex()):
-            if parent == qt_api.QtCore.QModelIndex():
-                return 1
-            else:
-                return 0
+            return 1 if parent == qt_api.QtCore.QModelIndex() else 0
 
         def data(
-            self,
-            index=qt_api.QtCore.QModelIndex(),
-            role=qt_api.QtCore.Qt.ItemDataRole.DisplayRole,
-        ):
-            if role == broken_role:
-                return object()  # This will fail the type check for any role
-            else:
-                return None
+                    self,
+                    index=qt_api.QtCore.QModelIndex(),
+                    role=qt_api.QtCore.Qt.ItemDataRole.DisplayRole,
+                ):
+            return object() if role == broken_role else None
+
 
     check_model(BrokenTypeModel(), should_pass=False)
 

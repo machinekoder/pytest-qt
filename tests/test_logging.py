@@ -40,30 +40,29 @@ def test_basic_logging(testdir, test_succeeds, qt_log):
     if test_succeeds:
         assert "Captured Qt messages" not in res.stdout.str()
         assert "Captured stderr call" not in res.stdout.str()
+    elif qt_log:
+        res.stdout.fnmatch_lines(
+            [
+                "*-- Captured Qt messages --*",
+                # qInfo is not exposed by the bindings yet (#232)
+                # '*QtInfoMsg: this is an INFO message*',
+                "*QtDebugMsg: this is a DEBUG message*",
+                "*QtWarningMsg: this is a WARNING message*",
+                "*QtCriticalMsg: this is a CRITICAL message*",
+            ]
+        )
     else:
-        if qt_log:
-            res.stdout.fnmatch_lines(
-                [
-                    "*-- Captured Qt messages --*",
-                    # qInfo is not exposed by the bindings yet (#232)
-                    # '*QtInfoMsg: this is an INFO message*',
-                    "*QtDebugMsg: this is a DEBUG message*",
-                    "*QtWarningMsg: this is a WARNING message*",
-                    "*QtCriticalMsg: this is a CRITICAL message*",
-                ]
-            )
-        else:
-            res.stdout.fnmatch_lines(
-                [
-                    "*-- Captured stderr call --*",
-                    # qInfo is not exposed by the bindings yet (#232)
-                    # '*QtInfoMsg: this is an INFO message*',
-                    # 'this is an INFO message*',
-                    "this is a DEBUG message*",
-                    "this is a WARNING message*",
-                    "this is a CRITICAL message*",
-                ]
-            )
+        res.stdout.fnmatch_lines(
+            [
+                "*-- Captured stderr call --*",
+                # qInfo is not exposed by the bindings yet (#232)
+                # '*QtInfoMsg: this is an INFO message*',
+                # 'this is an INFO message*',
+                "this is a DEBUG message*",
+                "this is a WARNING message*",
+                "this is a CRITICAL message*",
+            ]
+        )
 
 
 def test_qinfo(qtlog):
@@ -137,11 +136,7 @@ def test_disable_qtlog_context_manager(testdir, use_context_manager):
         """
     )
 
-    if use_context_manager:
-        code = "with qtlog.disabled():"
-    else:
-        code = "if 1:"
-
+    code = "with qtlog.disabled():" if use_context_manager else "if 1:"
     testdir.makepyfile(
         """
         from pytestqt.qt_compat import qt_api
@@ -248,9 +243,7 @@ def test_logging_fails_tests(testdir, level, expect_passes):
     if level != "NO":
         lines.extend(
             [
-                "*Failure: Qt messages with level {} or above emitted*".format(
-                    level.upper()
-                ),
+                f"*Failure: Qt messages with level {level.upper()} or above emitted*",
                 "*-- Captured Qt messages --*",
             ]
         )

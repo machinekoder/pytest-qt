@@ -432,10 +432,7 @@ class QtBot:
         if check_params_cbs:
             if len(check_params_cbs) != len(signals):
                 raise ValueError(
-                    "Number of callbacks ({}) does not "
-                    "match number of signals ({})!".format(
-                        len(check_params_cbs), len(signals)
-                    )
+                    f"Number of callbacks ({len(check_params_cbs)}) does not match number of signals ({len(signals)})!"
                 )
         blocker = MultiSignalBlocker(
             timeout=timeout,
@@ -589,8 +586,7 @@ class QtBot:
         .. note:: This method is also available as ``wait_callback`` (pep-8 alias)
         """
         raising = self._should_raise(raising)
-        blocker = CallbackBlocker(timeout=timeout, raising=raising)
-        return blocker
+        return CallbackBlocker(timeout=timeout, raising=raising)
 
     @contextlib.contextmanager
     def captureExceptions(self):
@@ -650,8 +646,7 @@ class QtBot:
         tmp_path = self._request.getfixturevalue("tmp_path")
 
         parts = ["screenshot", widget.__class__.__name__]
-        name = widget.objectName()
-        if name:
+        if name := widget.objectName():
             parts.append(name)
         if suffix:
             parts.append(suffix)
@@ -663,11 +658,11 @@ class QtBot:
             if path.exists():
                 continue
 
-            ok = pixmap.save(str(path))
-            if not ok:
-                raise ScreenshotError(f"Saving to {path} failed")
+            if ok := pixmap.save(str(path)):
+                return path
 
-            return path
+            else:
+                raise ScreenshotError(f"Saving to {path} failed")
 
         raise ScreenshotError(f"Failed to find unique filename, last try: {path}")
 
@@ -744,8 +739,7 @@ def _close_widgets(item):
     """
     Close all widgets registered in the pytest item.
     """
-    widgets = getattr(item, "qt_widgets", None)
-    if widgets:
+    if widgets := getattr(item, "qt_widgets", None):
         for w, before_close_func in item.qt_widgets:
             w = w()
             if w is not None:
@@ -792,9 +786,7 @@ class _WaitWidgetContextManager:
                 method = getattr(qt_api.QtTest.QTest, self._method_name)
                 r = method(self._widget, self._timeout)
                 if not r:
-                    msg = "widget {} not {} in {} ms.".format(
-                        self._widget, self._adjective_name, self._timeout
-                    )
+                    msg = f"widget {self._widget} not {self._adjective_name} in {self._timeout} ms."
                     raise TimeoutError(msg)
         finally:
             self._widget = None
