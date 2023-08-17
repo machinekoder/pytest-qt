@@ -30,12 +30,10 @@ def wait_4_ticks_callback(request, tick_counter):
     """
     if request.param == "predicate":
         return lambda: tick_counter.ticks >= 4
-    else:
+    def check_ticks():
+        assert tick_counter.ticks >= 4
 
-        def check_ticks():
-            assert tick_counter.ticks >= 4
-
-        return check_ticks
+    return check_ticks
 
 
 @pytest.fixture

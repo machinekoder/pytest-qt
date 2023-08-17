@@ -57,10 +57,14 @@ class _QtApi:
         return api
 
     def _get_already_loaded_backend(self):
-        for api, backend in QT_APIS.items():
-            if _is_library_loaded(backend):
-                return api
-        return None
+        return next(
+            (
+                api
+                for api, backend in QT_APIS.items()
+                if _is_library_loaded(backend)
+            ),
+            None,
+        )
 
     def _guess_qt_api(self):  # pragma: no cover
         def _can_import(name):

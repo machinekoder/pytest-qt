@@ -89,8 +89,7 @@ def qtbot(qapp, request):
     Make sure to call addWidget for each top-level widget you create to ensure
     that they are properly closed after the test ends.
     """
-    result = QtBot(request)
-    return result
+    return QtBot(request)
 
 
 @pytest.fixture
@@ -130,9 +129,7 @@ def pytest_addoption(parser):
     default_log_fail = QtLoggingPlugin.LOG_FAIL_OPTIONS[0]
     parser.addini(
         "qt_log_level_fail",
-        'log level in which tests can fail: {} (default: "{}")'.format(
-            QtLoggingPlugin.LOG_FAIL_OPTIONS, default_log_fail
-        ),
+        f'log level in which tests can fail: {QtLoggingPlugin.LOG_FAIL_OPTIONS} (default: "{default_log_fail}")',
         default=default_log_fail,
     )
     parser.addini(
@@ -177,8 +174,7 @@ def pytest_runtest_setup(item):
 def pytest_runtest_call(item):
     yield
     _process_events()
-    capture_enabled = _is_exception_capture_enabled(item)
-    if capture_enabled:
+    if capture_enabled := _is_exception_capture_enabled(item):
         item.qt_exception_capture_manager.fail_if_exceptions_occurred("CALL")
 
 
@@ -194,8 +190,7 @@ def pytest_runtest_teardown(item):
     _process_events()
     yield
     _process_events()
-    capture_enabled = _is_exception_capture_enabled(item)
-    if capture_enabled:
+    if capture_enabled := _is_exception_capture_enabled(item):
         item.qt_exception_capture_manager.fail_if_exceptions_occurred("TEARDOWN")
         item.qt_exception_capture_manager.finish()
 
@@ -236,8 +231,8 @@ def pytest_report_header():
     v = qt_api.get_versions()
     fields = [
         f"{v.qt_api} {v.qt_api_version}",
-        "Qt runtime %s" % v.runtime,
-        "Qt compiled %s" % v.compiled,
+        f"Qt runtime {v.runtime}",
+        f"Qt compiled {v.compiled}",
     ]
     version_line = " -- ".join(fields)
     return [version_line]

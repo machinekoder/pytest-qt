@@ -22,8 +22,7 @@ class QtLoggingPlugin:
     def pytest_runtest_setup(self, item):
         if get_marker(item, "no_qt_log"):
             return
-        m = get_marker(item, "qt_log_ignore")
-        if m:
+        if m := get_marker(item, "qt_log_ignore"):
             if not set(m.kwargs).issubset({"extend"}):
                 raise ValueError(
                     "Invalid keyword arguments in {!r} for "
@@ -49,8 +48,7 @@ class QtLoggingPlugin:
         if call.when == "call":
             report = outcome.get_result()
 
-            m = get_marker(item, "qt_log_level_fail")
-            if m:
+            if m := get_marker(item, "qt_log_level_fail"):
                 log_fail_level = m.args[0]
             else:
                 log_fail_level = self.config.getini("qt_log_level_fail")

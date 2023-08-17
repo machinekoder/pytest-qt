@@ -632,9 +632,7 @@ def test_already_loaded_backend(monkeypatch, option_api, backend):
     import_orig = builtins.__import__
 
     def _fake_import(name, *args, **kwargs):
-        if name == backend:
-            return qbackend
-        return import_orig(name, *args, **kwargs)
+        return qbackend if name == backend else import_orig(name, *args, **kwargs)
 
     def _fake_is_library_loaded(name, *args):
         return name == backend
